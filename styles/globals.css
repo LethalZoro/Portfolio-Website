@@ -7,12 +7,17 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Dark mode scrollbar styles */
+.dark {
+  color-scheme: dark;
+}
+
 @layer components {
   .heroButton {
-    @apply px-3 md:px-6 py-2 border border-lightBackground rounded-full uppercase text-xs tracking-widest text-gray-500 transition-all hover:border-darkGreen/40 hover:text-darkGreen/40;
+    @apply px-3 md:px-6 py-2 border border-lightBackground dark:border-gray-600 rounded-full uppercase text-xs tracking-widest text-gray-500 dark:text-gray-400 transition-all hover:border-darkGreen/40 hover:text-darkGreen/40 dark:hover:border-darkerGreen/60 dark:hover:text-darkerGreen/80;
   }
 
   .contactInput {
-    @apply outline-none bg-slate-400/20 rounded-lg border-b-2 px-6 py-3 md:py-4  text-gray-500 placeholder-gray-500 transition-all focus:border-darkGreen/20 focus:text-darkGreen/80 hover:border-darkGreen/20;
+    @apply outline-none bg-slate-400/20 dark:bg-gray-700/30 rounded-lg border-b-2 px-6 py-3 md:py-4 text-gray-500 dark:text-gray-300 placeholder-gray-500 dark:placeholder-gray-400 transition-all focus:border-darkGreen/20 focus:text-darkGreen/80 hover:border-darkGreen/20 dark:focus:border-darkerGreen/40 dark:focus:text-darkerGreen/80 dark:hover:border-darkerGreen/40;
   }
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from "react";
 import { Experience } from "../typings";
@@ -32,7 +34,7 @@ export default function ExperienceCard({ experience }: Props) {
 
   return (
     <div 
-      className={`flex drop-shadow-xl flex-col rounded-3xl items-center space-y-0 flex-shrink-0 w-72 md:w-[600px] xl:w-[700px] snap-center bg-[#FFFFFF] bg-gradient-to-tr from-white to-darkGreen/20 p-5 md:p10 hover:opacity-100 opacity-100 transition-opacity duration-200 hover:scale-105 transform transition-transform ${isClickableCompany ? 'cursor-pointer' : ''}`}
+      className={`flex drop-shadow-xl flex-col rounded-3xl items-center space-y-0 flex-shrink-0 w-72 md:w-[600px] xl:w-[700px] snap-center bg-white dark:bg-gray-800 bg-gradient-to-tr from-white dark:from-gray-800 to-darkGreen/20 dark:to-darkerGreen/30 p-5 md:p10 hover:opacity-100 opacity-100 transition-all duration-300 hover:scale-105 transform m-4 ${isClickableCompany ? 'cursor-pointer' : ''}`}
       onClick={isClickableCompany ? handleCardClick : undefined}
     >
       <motion.img
@@ -49,10 +51,10 @@ export default function ExperienceCard({ experience }: Props) {
       <div className="w-full px-2 md:px-5">
         <div className="flex justify-between items-center">
           <div className="flex-1">
-            <h4 className="text-lg md:text-3xl font-light text-black">
+            <h4 className="text-lg md:text-3xl font-light text-black dark:text-white">
               {experience?.jobTitle}
             </h4>
-            <div className="font-bold text-md md:text-2xl mt-1 text-lightGreen">
+            <div className="font-bold text-md md:text-2xl mt-1 text-lightGreen dark:text-lightGreen">
               <span>{experience?.company}</span>
             </div>
             <div className="flex space-x-2 my-2">
@@ -78,14 +80,14 @@ export default function ExperienceCard({ experience }: Props) {
             alt="Company Logo"
           />
         </div>
-        <p className="uppercase py-2 md:py-5 text-gray-500 text-sm md:text-lg">
+        <p className="uppercase py-2 md:py-5 text-gray-500 dark:text-gray-400 text-sm md:text-lg">
           {experience?.dateStarted} -{" "}
           {experience.isCurrentlyWorkingHere
             ? "Present"
             : experience?.dateEnded}
         </p>
       </div>
-      <ul className="px-2 md:px-5 list-disc text-black space-y-2 pr-3 text-justify ml-0 text-sm md:text-lg pl-4 h-34 md:h-44 overflow-y-scroll scrollbar-thin scrollbar-track-gray-200 scrollbar-thumb-darkGreen/80">
+      <ul className="px-2 md:px-5 list-disc text-black dark:text-gray-200 space-y-2 pr-3 text-justify ml-0 text-sm md:text-lg pl-4 h-34 md:h-44 overflow-y-scroll scrollbar scrollbar-track-gray-200 dark:scrollbar-track-gray-600 scrollbar-thumb-darkGreen/80 dark:scrollbar-thumb-darkerGreen/80">
         {experience?.points.map((point, i) => (
           <li key={i}>{point}</li>
         ))}

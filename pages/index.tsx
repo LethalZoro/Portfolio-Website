@@ -18,6 +18,8 @@ import ContactMe from "../components/ContactMe";
 import Link from "next/link";
 import { HomeIcon } from "@heroicons/react/24/solid";
 import Script from "next/script";
+import { ThemeProvider } from "../contexts/ThemeContext";
+import ThemeToggle from "../components/ThemeToggle";
 
 type Props = {
   pageInfo: PageInfo;
@@ -29,10 +31,12 @@ type Props = {
 
 const Home = ({ pageInfo, experiences, projects, skills, socials }: Props) => {
   return (
-    <div
-      className="bg-lightBackground text-darkBlack h-screen
-    overflow-y-scroll overflow-x-hidden z-0 scrollbar-thin scrollbar-track-gray-400/20 scrollbar-thumb-darkGreen/80"
-    >
+    <ThemeProvider>
+      <div
+        className="bg-lightBackground dark:bg-darkBackground text-darkBlack dark:text-white h-screen
+      overflow-y-scroll overflow-x-hidden z-0 scrollbar-thin scrollbar-track-gray-400/20 scrollbar-thumb-darkGreen/80 dark:scrollbar-track-gray-800/20 dark:scrollbar-thumb-darkerGreen/80 transition-colors duration-300"
+      >
+        <ThemeToggle />
       <Head>
         <meta
           name="format-detection"
@@ -106,15 +110,16 @@ const Home = ({ pageInfo, experiences, projects, skills, socials }: Props) => {
       </section>
 
       <Link href="#hero">
-        <footer className="sticky bottom-5 w-full cursor-pointer">
+        <footer className="sticky bottom-5 w-full cursor-pointer z-50">
           <div className="flex items-center justify-center">
-            <div className="h-10 w-10 bg-darkGreen/80 rounded-full flex items-center justify-center">
+            <div className="h-10 w-10 bg-gray-600/80 dark:bg-gray-700/80 rounded-full flex items-center justify-center hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-300 shadow-lg">
               <HomeIcon className="h-7 w-17 pb-0.5 hover:grayscale-100 text-white animate-pulse" />
             </div>
           </div>
         </footer>
       </Link>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 };
 
