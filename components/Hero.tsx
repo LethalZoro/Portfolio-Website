@@ -1,7 +1,10 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { Cursor, useTypewriter } from "react-simple-typewriter";
 import { PageInfo } from "../typings";
 import BackgroundCircles from "./BackgroundCircles";
+import Image from "next/image";
 
 type Props = { pageInfo: PageInfo };
 
@@ -28,17 +31,20 @@ export default function Hero({ pageInfo }: Props) {
       "And I'm passionate about tech 🚀",
     ],
     loop: true,
-    delaySpeed: 2000,
+    delaySpeed: 1000,
   });
 
   return (
     <div className="h-screen flex flex-col space-y-8 items-center justify-center text-center overflow-hidden">
       <BackgroundCircles />
 
-      <img
+      <Image
         className="relative rounded-full h-32 w-32 mx-auto object-cover"
         src="/Me-pic.png"
         alt="Muhammad Mustafa"
+        width={128}
+        height={128}
+        priority
       />
 
       <div className="z-20">
