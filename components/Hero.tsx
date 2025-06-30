@@ -1,5 +1,4 @@
-import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Cursor, useTypewriter } from "react-simple-typewriter";
 import { PageInfo } from "../typings";
 import BackgroundCircles from "./BackgroundCircles";
@@ -7,6 +6,20 @@ import BackgroundCircles from "./BackgroundCircles";
 type Props = { pageInfo: PageInfo };
 
 export default function Hero({ pageInfo }: Props) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    if (!isClient || typeof document === 'undefined') return;
+    
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   const [text, count] = useTypewriter({
     words: [
       `Hi, the name's ${pageInfo?.name}`,
@@ -38,18 +51,18 @@ export default function Hero({ pageInfo }: Props) {
         </h1>
 
         <div className="pt-5">
-          <Link href="#about">
-            <button className="heroButton">About</button>
-          </Link>
-          <Link href="#experience">
-            <button className="heroButton">Experience</button>
-          </Link>
-          <Link href="#skills">
-            <button className="heroButton">Skills</button>
-          </Link>
-          <Link href="#projects">
-            <button className="heroButton">Projects</button>
-          </Link>
+          <button className="heroButton" onClick={() => scrollToSection('about')}>
+            About
+          </button>
+          <button className="heroButton" onClick={() => scrollToSection('experience')}>
+            Experience
+          </button>
+          <button className="heroButton" onClick={() => scrollToSection('skills')}>
+            Skills
+          </button>
+          <button className="heroButton" onClick={() => scrollToSection('projects')}>
+            Projects
+          </button>
         </div>
       </div>
     </div>
