@@ -52,7 +52,7 @@ export function ChipModel() {
         initial={{ opacity: 0 }}
         animate={{ opacity: near ? 1 : 0 }}
         transition={{ duration: 0.8 }}
-        className="h-52 sm:h-60"
+        className="h-72 sm:h-80"
       >
         {near && <ChipScene isDark={isDark} />}
       </motion.div>

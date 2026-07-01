@@ -65,11 +65,11 @@ const SIM_GLSL = /* glsl */ `
     if (uWave.w >= 0.0) {
       vec3 dw = p - uWave.xyz;
       float dist = length(dw);
-      float ring = uWave.w * 7.0;
-      float band = exp(-pow((dist - ring) * 1.6, 2.0));
-      float amp = exp(-uWave.w * 2.0) * 1.4;
+      float ring = uWave.w * 5.5;
+      float band = exp(-pow((dist - ring) * 1.1, 2.0));
+      float amp = exp(-uWave.w * 1.5) * 2.0;
       p += normalize(dw + vec3(0.0001)) * band * amp;
-      glow += band * amp * 0.8;
+      glow += band * amp * 1.1;
     }
     p.y += uScrollVel * (0.4 + seed * 0.6);
     glow = min(glow, 1.2);
@@ -257,8 +257,8 @@ interface FieldGeometry {
 function buildField(count: number): FieldGeometry {
   const rand = mulberry32(1337);
   const layers = 5;
-  const spanX = 16;
-  const spanY = 8;
+  const spanX = 15;
+  const spanY = 7.5;
 
   const positions = new Float32Array(count * 3);
   const brain = new Float32Array(count * 3);
@@ -273,7 +273,7 @@ function buildField(count: number): FieldGeometry {
     const cx = -spanX / 2 + (layer * spanX) / (layers - 1);
     positions[i * 3] = cx + (rand() - 0.5) * 2.6;
     positions[i * 3 + 1] = (rand() - 0.5) * spanY * (0.55 + rand() * 0.45);
-    positions[i * 3 + 2] = (rand() - 0.5) * 5;
+    positions[i * 3 + 2] = (rand() - 0.5) * 4.2;
 
     const b = brainSample(rand);
     brain[i * 3] = b[0];
@@ -287,7 +287,7 @@ function buildField(count: number): FieldGeometry {
 
     mixes[i] = rand() > 0.72 ? 1 : rand() * 0.3;
     seeds[i] = rand();
-    sizes[i] = 1.2 + rand() * 2.4;
+    sizes[i] = 1.4 + rand() * 2.6;
     layerNodes[layer]!.push(i);
   }
 
@@ -305,7 +305,7 @@ function buildField(count: number): FieldGeometry {
     const to = layerNodes[l + 1]!;
     for (const a of from) {
       // keep the graph sparse: high particle counts drown in line overdraw
-      if (rand() > 0.09) continue;
+      if (rand() > 0.12) continue;
       const [ax, ay, az] = copy3(positions, a);
       const nearest = to
         .map((b) => {
@@ -352,8 +352,8 @@ const DARK = {
 const LIGHT = {
   colorA: new THREE.Color("#6d28d9"),
   colorB: new THREE.Color("#0e7490"),
-  opacity: 0.34,
-  lineOpacity: 0.04,
+  opacity: 0.42,
+  lineOpacity: 0.05,
 };
 
 function scrollFraction(): number {
@@ -451,7 +451,12 @@ export function MorphField({
     const p = scrollFraction();
 
     morphCur.current += (morphTarget(p) - morphCur.current) * k;
-    fadeCur.current += (fadeTarget(p) - fadeCur.current) * k;
+    // a click flashes the whole field awake for a moment, wherever you are
+    const waveT =
+      waveStart.current >= 0 ? uniforms.uTime.value - waveStart.current : Infinity;
+    const waveBoost = Math.min(1, Math.exp(-waveT * 1.2));
+    fadeCur.current +=
+      (Math.max(fadeTarget(p), waveBoost) - fadeCur.current) * Math.min(delta * 5, 1);
     uniforms.uMorph.value = morphCur.current;
 
     // camera arc
@@ -537,11 +542,40 @@ export function MorphField({
       (theme.lineOpacity * fadeCur.current - uniforms.uLineOpacity.value) * k6;
   });
 
+  // Materials are constructed imperatively so they hold OUR uniforms object
+  // by reference; JSX-applied uniform props can end up cloned/decoupled,
+  // which froze every animated uniform (boot, morph, fade, wake, wave).
+  const pointsMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: POINTS_VERT,
+        fragmentShader: POINTS_FRAG,
+        uniforms,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [uniforms]
+  );
+
+  const linesMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: LINES_VERT,
+        fragmentShader: LINES_FRAG,
+        uniforms,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [uniforms]
+  );
+
   const scale = Math.min(viewport.width / 17, 1.15);
 
   return (
     <group ref={groupRef} scale={scale}>
-      <points>
+      <points material={pointsMaterial}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[field.positions, 3]} />
           <bufferAttribute attach="attributes-aPosBrain" args={[field.brain, 3]} />
@@ -550,17 +584,9 @@ export function MorphField({
           <bufferAttribute attach="attributes-aSeed" args={[field.seeds, 1]} />
           <bufferAttribute attach="attributes-aSize" args={[field.sizes, 1]} />
         </bufferGeometry>
-        <shaderMaterial
-          vertexShader={POINTS_VERT}
-          fragmentShader={POINTS_FRAG}
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
       </points>
 
-      <lineSegments>
+      <lineSegments material={linesMaterial}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[field.linePositions, 3]} />
           <bufferAttribute attach="attributes-aPosBrain" args={[field.lineBrain, 3]} />
@@ -568,14 +594,6 @@ export function MorphField({
           <bufferAttribute attach="attributes-aSeed" args={[field.lineSeeds, 1]} />
           <bufferAttribute attach="attributes-aLineSeed" args={[field.lineSegSeeds, 1]} />
         </bufferGeometry>
-        <shaderMaterial
-          vertexShader={LINES_VERT}
-          fragmentShader={LINES_FRAG}
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
       </lineSegments>
     </group>
   );

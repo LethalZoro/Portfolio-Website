@@ -60,7 +60,7 @@ export function FieldBackground() {
         isDark={isDark}
         reduced={!!reduced}
         isMobile={isMobile}
-        count={isMobile ? 3000 : 9000}
+        count={isMobile ? 4500 : 15000}
       />
       {/* readability scrim, strongest behind the hero headline */}
       <div

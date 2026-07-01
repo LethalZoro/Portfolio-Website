@@ -10,6 +10,7 @@ import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/reac
 export function Cursor() {
   const [enabled, setEnabled] = useState(false);
   const [active, setActive] = useState(false);
+  const [pulses, setPulses] = useState<number[]>([]);
   const reduced = useReducedMotion();
   const x = useMotionValue(-100);
   const y = useMotionValue(-100);
@@ -27,8 +28,15 @@ export function Cursor() {
         !!target?.closest?.("a, button, input, textarea, [role='button']")
       );
     };
+    const onDown = () => {
+      setPulses((prev) => [...prev.slice(-2), Date.now()]);
+    };
     window.addEventListener("mousemove", onMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMove);
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+    };
   }, [reduced, x, y]);
 
   if (!enabled) return null;
@@ -44,6 +52,19 @@ export function Cursor() {
         transition={{ duration: 0.2 }}
         className="-ml-[14px] -mt-[14px] h-7 w-7 rounded-full border border-accent"
       />
+      {/* click ripple */}
+      {pulses.map((id) => (
+        <motion.span
+          key={id}
+          initial={{ scale: 0.4, opacity: 0.8 }}
+          animate={{ scale: 3, opacity: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          onAnimationComplete={() =>
+            setPulses((prev) => prev.filter((p) => p !== id))
+          }
+          className="absolute left-0 top-0 -ml-[14px] -mt-[14px] h-7 w-7 rounded-full border-2 border-accent-2"
+        />
+      ))}
     </motion.div>
   );
 }
