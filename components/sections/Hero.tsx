@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  AnimatePresence,
   motion,
   useReducedMotion,
   useScroll,
@@ -36,28 +35,53 @@ function CssReveal({ text, delay }: { text: string; delay: number }) {
   );
 }
 
+const GLYPHS = "!<>-_\\/[]{}=+*^?#01";
+
+/** Decode effect: text churns through glyphs and resolves left to right. */
+function useScramble(target: string) {
+  const [display, setDisplay] = useState(target);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    if (reduced) {
+      setDisplay(target);
+      return;
+    }
+    let frame = 0;
+    const total = 16;
+    const id = setInterval(() => {
+      frame++;
+      const progress = frame / total;
+      if (frame >= total) {
+        setDisplay(target);
+        clearInterval(id);
+        return;
+      }
+      setDisplay(
+        target
+          .split("")
+          .map((ch, i) => {
+            if (ch === " ") return " ";
+            if (i / target.length < progress - 0.12) return ch;
+            return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+          })
+          .join("")
+      );
+    }, 32);
+    return () => clearInterval(id);
+  }, [target, reduced]);
+
+  return display;
+}
+
 function RoleCycler({ roles }: { roles: string[] }) {
   const [index, setIndex] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % roles.length), 2600);
+    const id = setInterval(() => setIndex((i) => (i + 1) % roles.length), 2800);
     return () => clearInterval(id);
   }, [roles.length]);
-  return (
-    <span className="relative inline-flex h-[1.35em] items-end overflow-hidden align-baseline">
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={roles[index]}
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: "-100%", opacity: 0 }}
-          transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-          className="text-accent whitespace-nowrap"
-        >
-          {roles[index]}
-        </motion.span>
-      </AnimatePresence>
-    </span>
-  );
+  const display = useScramble(roles[index] ?? "");
+  return <span className="text-accent whitespace-nowrap">{display}</span>;
 }
 
 export function Hero() {

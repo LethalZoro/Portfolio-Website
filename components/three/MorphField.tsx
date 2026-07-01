@@ -1,47 +1,71 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 /**
- * "Signal Field" v2: one particle system, three shapes, driven by page scroll.
+ * "Signal Field" v3: one particle system, three shapes, full interaction layer.
  *
- *   scroll 0.00 - 0.18  neural network (layered constellation)
- *   scroll 0.18 - 0.34  morph -> brain point cloud
- *   scroll 0.52 - 0.68  morph -> silicon die shot
+ * Shapes (driven by page scroll):
+ *   0.00-0.18  neural network      0.18-0.34  morph -> brain
+ *   0.52-0.68  morph -> silicon die
  *
- * Every particle carries all three target positions as attributes; the vertex
- * shader blends between them with per-particle stagger (seeded), so shapes
- * dissolve organically instead of tweening rigidly. Connection lines carry the
- * same targets and morph with their endpoint nodes. The camera drifts along a
- * gentle path as the page scrolls. All motion lives on the GPU.
+ * Interaction (all in local field space, so it stays glued to the pointer even
+ * when the field shifts and scales after the hero):
+ *   - wake trail: an 8-point history of the pointer with fading strength;
+ *     moving the mouse carves a glowing wake with momentum, holding it still
+ *     leaves only a small quiet dent
+ *   - click shockwave: an expanding damped ring displaces and lights particles
+ *   - scroll velocity: fast scrolling stretches the field with per-particle lag
  */
 
-const DRIFT_GLSL = /* glsl */ `
+const TRAIL_LEN = 8;
+
+const SIM_GLSL = /* glsl */ `
+  uniform vec4 uTrail[${TRAIL_LEN}];
+  uniform vec4 uWave;
+  uniform float uScrollVel;
+
   vec3 drift(vec3 p, float seed, float time, float amp) {
     p.x += sin(time * 0.25 + seed * 6.2831) * 0.20 * amp;
     p.y += cos(time * 0.20 + seed * 12.566) * 0.24 * amp;
     p.z += sin(time * 0.18 + seed * 3.1415) * 0.16 * amp;
     return p;
   }
-  vec3 repel(vec3 p, vec3 pointer, out float glow) {
-    vec3 d = p - pointer;
-    float dist = length(d);
-    float force = smoothstep(2.4, 0.0, dist);
-    glow = force;
-    return p + normalize(d + vec3(0.0001)) * force * 0.7;
-  }
+
   vec3 morphed(vec3 net, vec3 brain, vec3 chip, float m, float seed) {
     float m1 = smoothstep(seed * 0.3, 1.0, clamp(m, 0.0, 1.0));
     float m2 = smoothstep(seed * 0.3, 1.0, clamp(m - 1.0, 0.0, 1.0));
     return mix(mix(net, brain, m1), chip, m2);
   }
+
+  vec3 interactField(vec3 p, float seed, out float glow) {
+    glow = 0.0;
+    for (int i = 0; i < ${TRAIL_LEN}; i++) {
+      vec3 d = p - uTrail[i].xyz;
+      float dist = length(d);
+      float force = smoothstep(1.9, 0.0, dist) * uTrail[i].w;
+      p += normalize(d + vec3(0.0001)) * force * 0.55;
+      glow += force;
+    }
+    if (uWave.w >= 0.0) {
+      vec3 dw = p - uWave.xyz;
+      float dist = length(dw);
+      float ring = uWave.w * 7.0;
+      float band = exp(-pow((dist - ring) * 1.6, 2.0));
+      float amp = exp(-uWave.w * 2.0) * 1.4;
+      p += normalize(dw + vec3(0.0001)) * band * amp;
+      glow += band * amp * 0.8;
+    }
+    p.y += uScrollVel * (0.4 + seed * 0.6);
+    glow = min(glow, 1.2);
+    return p;
+  }
 `;
 
 const POINTS_VERT = /* glsl */ `
   uniform float uTime;
-  uniform vec3 uPointer;
   uniform float uPixelRatio;
   uniform float uMorph;
   attribute float aMix;
@@ -51,13 +75,13 @@ const POINTS_VERT = /* glsl */ `
   attribute vec3 aPosChip;
   varying float vMix;
   varying float vGlow;
-  ${DRIFT_GLSL}
+  ${SIM_GLSL}
   void main() {
     vec3 target = morphed(position, aPosBrain, aPosChip, uMorph, aSeed);
     float amp = mix(1.0, 0.4, clamp(uMorph - 1.0, 0.0, 1.0));
     vec3 p = drift(target, aSeed, uTime, amp);
     float glow;
-    p = repel(p, uPointer, glow);
+    p = interactField(p, aSeed, glow);
     vGlow = glow;
     vMix = aMix;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
@@ -84,20 +108,19 @@ const POINTS_FRAG = /* glsl */ `
 
 const LINES_VERT = /* glsl */ `
   uniform float uTime;
-  uniform vec3 uPointer;
   uniform float uMorph;
   attribute float aSeed;
   attribute float aLineSeed;
   attribute vec3 aPosBrain;
   attribute vec3 aPosChip;
   varying float vPulse;
-  ${DRIFT_GLSL}
+  ${SIM_GLSL}
   void main() {
     vec3 target = morphed(position, aPosBrain, aPosChip, uMorph, aSeed);
     float amp = mix(1.0, 0.4, clamp(uMorph - 1.0, 0.0, 1.0));
     vec3 p = drift(target, aSeed, uTime, amp);
     float glow;
-    p = repel(p, uPointer, glow);
+    p = interactField(p, aSeed, glow);
     float t = fract(uTime * 0.06 + aLineSeed);
     vPulse = smoothstep(0.10, 0.0, abs(t - 0.5)) + glow * 0.35;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
@@ -140,9 +163,7 @@ function brainSample(rand: Rand): [number, number, number] {
   let x = r * Math.sin(phi) * Math.cos(theta) * 1.35;
   let y = r * Math.cos(phi) * 0.95;
   const z = r * Math.sin(phi) * Math.sin(theta) * 1.05;
-  // interhemispheric fissure
   if (Math.abs(x) < 0.09) x += (x >= 0 ? 1 : -1) * 0.09;
-  // flatten the base
   if (y < -0.62) y = -0.62 - (y + 0.62) * 0.25;
   const s = 3.4;
   return [x * s, y * s + 0.3, z * s];
@@ -324,7 +345,6 @@ function scrollFraction(): number {
   return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
 }
 
-/** scroll fraction -> morph stage (0 network, 1 brain, 2 chip) */
 function morphTarget(p: number): number {
   if (p < 0.18) return 0;
   if (p < 0.34) return (p - 0.18) / 0.16;
@@ -333,7 +353,6 @@ function morphTarget(p: number): number {
   return 2;
 }
 
-/** scroll fraction -> field intensity (full in hero, faint below) */
 function fadeTarget(p: number): number {
   if (p < 0.03) return 1;
   if (p < 0.14) return 1 - ((p - 0.03) / 0.11) * 0.78;
@@ -352,18 +371,28 @@ export function MorphField({
   const { viewport, gl } = useThree();
   const field = useMemo(() => buildField(count), [count]);
   const groupRef = useRef<THREE.Group>(null);
-  const pointerTarget = useRef(new THREE.Vector3(999, 999, 0));
-  const pointerSmooth = useRef(new THREE.Vector3(999, 999, 0));
   const camTarget = useRef(new THREE.Vector3(0, 0, 14));
   const morphCur = useRef(0);
   const fadeCur = useRef(1);
+  const lastTrailPos = useRef(new THREE.Vector3(999, 999, 0));
+  const waveStart = useRef(-1);
+  const pendingWaveNdc = useRef<{ x: number; y: number } | null>(null);
+  const lastScrollY = useRef(0);
+  const scrollVel = useRef(0);
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uMorph: { value: 0 },
-      uPointer: { value: new THREE.Vector3(999, 999, 0) },
+      uScrollVel: { value: 0 },
       uPixelRatio: { value: gl.getPixelRatio() },
+      uTrail: {
+        value: Array.from(
+          { length: TRAIL_LEN },
+          () => new THREE.Vector4(999, 999, 0, 0)
+        ),
+      },
+      uWave: { value: new THREE.Vector4(0, 0, 0, -1) },
       uColorA: { value: DARK.colorA.clone() },
       uColorB: { value: DARK.colorB.clone() },
       uOpacity: { value: DARK.opacity },
@@ -372,6 +401,18 @@ export function MorphField({
     [gl]
   );
 
+  useEffect(() => {
+    if (!interactive) return;
+    const onDown = (e: PointerEvent) => {
+      pendingWaveNdc.current = {
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: -(e.clientY / window.innerHeight) * 2 + 1,
+      };
+    };
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [interactive]);
+
   useFrame((state, delta) => {
     const k = Math.min(delta * 3, 1);
     const k6 = Math.min(delta * 6, 1);
@@ -379,12 +420,11 @@ export function MorphField({
 
     const p = scrollFraction();
 
-    // morph + intensity chase their scroll-derived targets
     morphCur.current += (morphTarget(p) - morphCur.current) * k;
     fadeCur.current += (fadeTarget(p) - fadeCur.current) * k;
     uniforms.uMorph.value = morphCur.current;
 
-    // camera travels a gentle arc through the field
+    // camera arc
     camTarget.current.set(
       Math.sin(p * Math.PI * 1.5) * 0.8,
       -0.35 * p,
@@ -393,30 +433,71 @@ export function MorphField({
     state.camera.position.lerp(camTarget.current, k);
     state.camera.lookAt(0, 0, 0);
 
-    // once morphing begins, the shape retreats to the right margin so it
-    // decorates the whitespace instead of sitting behind the copy
-    if (groupRef.current) {
+    // shape retreats to the right margin once morphing begins
+    const group = groupRef.current;
+    let groupX = 0;
+    let groupS = 1;
+    if (group) {
       const wide = state.viewport.width > 13;
       const m = Math.min(morphCur.current, 1);
       const baseScale = Math.min(state.viewport.width / 17, 1.15);
       const targetX = wide ? m * 4.6 : 0;
       const targetScale = baseScale * (1 - 0.25 * m);
-      groupRef.current.position.x +=
-        (targetX - groupRef.current.position.x) * k;
-      const s = groupRef.current.scale.x + (targetScale - groupRef.current.scale.x) * k;
-      groupRef.current.scale.setScalar(s);
+      group.position.x += (targetX - group.position.x) * k;
+      const s = group.scale.x + (targetScale - group.scale.x) * k;
+      group.scale.setScalar(s);
+      groupX = group.position.x;
+      groupS = s;
     }
+
+    // pointer -> LOCAL field space (stays correct when the group moves/scales)
+    const toLocal = (ndcX: number, ndcY: number, out: THREE.Vector3) => {
+      const wx = (ndcX * state.viewport.width) / 2;
+      const wy = (ndcY * state.viewport.height) / 2;
+      out.set((wx - groupX) / groupS, wy / groupS, 0);
+      return out;
+    };
+
+    // wake trail: head follows the pointer; a new tail point is recorded when
+    // the pointer has moved far enough, then every point's strength decays
+    const trail = uniforms.uTrail.value;
+    const decay = Math.exp(-delta * 2.2);
+    for (let i = 0; i < TRAIL_LEN; i++) trail[i]!.w *= decay;
 
     if (interactive) {
-      const px = (state.pointer.x * state.viewport.width) / 2;
-      const py = (state.pointer.y * state.viewport.height) / 2;
-      pointerTarget.current.set(px, py, 0);
+      const head = trail[0]!;
+      const local = toLocal(state.pointer.x, state.pointer.y, new THREE.Vector3());
+      head.set(local.x, local.y, 0, 0.85);
+      if (local.distanceTo(lastTrailPos.current) > 0.45) {
+        for (let i = TRAIL_LEN - 1; i > 1; i--) trail[i]!.copy(trail[i - 1]!);
+        trail[1]!.set(local.x, local.y, 0, 0.7);
+        lastTrailPos.current.copy(local);
+      }
     } else {
-      pointerTarget.current.set(999, 999, 0);
+      trail[0]!.w = 0;
     }
-    pointerSmooth.current.lerp(pointerTarget.current, Math.min(delta * 5, 1));
-    uniforms.uPointer.value.copy(pointerSmooth.current);
 
+    // click shockwave
+    if (pendingWaveNdc.current) {
+      const { x, y } = pendingWaveNdc.current;
+      pendingWaveNdc.current = null;
+      const local = toLocal(x, y, new THREE.Vector3());
+      uniforms.uWave.value.set(local.x, local.y, 0, 0);
+      waveStart.current = uniforms.uTime.value;
+    }
+    uniforms.uWave.value.w =
+      waveStart.current >= 0 ? uniforms.uTime.value - waveStart.current : -1;
+
+    // scroll velocity -> field stretch
+    const sy = window.scrollY;
+    const rawVel = delta > 0 ? (sy - lastScrollY.current) / delta : 0;
+    lastScrollY.current = sy;
+    scrollVel.current +=
+      (THREE.MathUtils.clamp(rawVel * 0.0004, -0.5, 0.5) - scrollVel.current) *
+      Math.min(delta * 8, 1);
+    uniforms.uScrollVel.value = scrollVel.current;
+
+    // theme + intensity
     const theme = isDark ? DARK : LIGHT;
     uniforms.uColorA.value.lerp(theme.colorA, k6);
     uniforms.uColorB.value.lerp(theme.colorB, k6);
