@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: oklch(0.975 0.008 290);
+  --surface: oklch(0.945 0.012 290);
+  --text: oklch(0.22 0.03 290);
+  --muted: oklch(0.46 0.03 290);
+  --line: oklch(0.88 0.015 290);
+  --accent: oklch(0.5 0.21 295);
+  --accent-2: oklch(0.55 0.12 210);
+  --glow: oklch(0.5 0.21 295 / 0.14);
+}
+
+.dark {
+  --bg: oklch(0.145 0.022 290);
+  --surface: oklch(0.19 0.026 290);
+  --text: oklch(0.93 0.01 290);
+  --muted: oklch(0.68 0.02 290);
+  --line: oklch(0.28 0.03 290);
+  --accent: oklch(0.72 0.19 295);
+  --accent-2: oklch(0.82 0.13 210);
+  --glow: oklch(0.72 0.19 295 / 0.22);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-glow: var(--glow);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", monospace;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 250ms var(--ease-out-quart), color 250ms var(--ease-out-quart);
+}
+
+.dark body {
+  line-height: 1.65;
+}
+
+/* Display type: expanded, heavy Archivo */
+.font-display {
+  font-family: var(--font-sans);
+  font-variation-settings: "wdth" 125;
+  font-weight: 790;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.font-display-sub {
+  font-family: var(--font-sans);
+  font-variation-settings: "wdth" 118;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.08;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+section {
+  scroll-margin-top: 4.5rem;
+}
+
+/* CSS-driven hero entrance: starts at first paint, no JS wait (LCP-safe) */
+@keyframes rise-in {
+  from {
+    transform: translateY(112%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-rise {
+  animation: rise-in 0.55s var(--ease-out-expo) both;
+}
+
+.anim-fade-up {
+  animation: fade-up-in 0.45s var(--ease-out-expo) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise,
+  .anim-fade-up {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* Marquee keyframes (transform-only, GPU-cheap) */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee-group:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation-play-state: paused;
+  }
+}
+
+/* Subtle starfield grain on dark bg, pure CSS */
+.dark .cosmic-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(oklch(0.93 0.01 290 / 0.05) 1px, transparent 1px);
+  background-size: 3.5px 3.5px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
+  opacity: 0.35;
+}

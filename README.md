@@ -1,87 +1,41 @@
-# Muhammad Mustafa's Portfolio Website
+# Muhammad Mustafa — Portfolio
 
-A modern, responsive portfolio website built with Next.js, TypeScript, Framer Motion, and Tailwind CSS. This portfolio showcases my skills, experience, and projects as a Full Stack Developer. 
-You can find the Website here [Mustafa.Software](https://www.mustafa.software/)
+Personal portfolio: dark-first "cosmic AI lab" design with an interactive WebGL neural particle field, full light mode, and orchestrated motion.
 
-## Features
+**Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · motion (framer-motion 12) · react-three-fiber + drei · Resend · Vercel Analytics + Speed Insights.
 
-- **Modern Tech Stack**: Built with Next.js 13, TypeScript, and Tailwind CSS
-- **Smooth Animations**: Enhanced user experience with Framer Motion
-- **Responsive Design**: Optimized for all device sizes
-- **Local Data Management**: All content managed through local data files (no CMS dependency)
-- **Contact Form**: Integrated contact form with mailto functionality
-- **Performance Optimized**: Built for fast loading and optimal SEO
-
-## Tech Stack
-
-- **Frontend**: Next.js 13, React 18, TypeScript
-- **Styling**: Tailwind CSS, Framer Motion
-- **Data Management**: Local TypeScript data files
-- **Icons**: React Social Icons, Heroicons
-- **Forms**: React Hook Form
-- **Deployment**: Vercel (recommended)
-
-# Getting Started
-
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
-
-## Running the Development Server
-
-First, install the dependencies:
+## Development
 
 ```bash
-npm install
+pnpm install
+pnpm dev        # http://localhost:3000
+pnpm build      # production build
 ```
 
-Then, run the development server:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Building for Production
-
-To create an optimized production build:
-
-```bash
-npm run build
-npm start
-```
-
-## Project Structure
+Create `.env.local` with your Resend key (see `.env.example`):
 
 ```
-├── components/          # React components
-│   ├── Header.tsx      # Navigation header
-│   ├── Hero.tsx        # Hero section
-│   ├── About.tsx       # About section
-│   ├── Skills.tsx      # Skills showcase
-│   ├── WorkExperience.tsx # Experience timeline
-│   ├── Projects.tsx    # Projects gallery
-│   └── ContactMe.tsx   # Contact form
-├── data/               # Local data files
-│   └── personalData.ts # All portfolio data
-├── pages/              # Next.js pages
-├── public/             # Static assets and images
-├── styles/             # CSS styles
-└── utils/              # Utility functions
+RESEND_API_KEY=re_...
 ```
 
-## Customization
+The same variable must be set in the Vercel project settings for the contact form to work in production. The form sends from `onboarding@mustafa.software` (the domain must stay verified in Resend) to the Gmail inbox.
 
-To customize this portfolio for your own use:
+## Editing content (no code changes needed)
 
-1. Update `data/personalData.ts` with your information
-2. Replace images in the `public/` folder
-3. Modify styling in components as needed
-4. Update contact information in `ContactMe.tsx`
+All site content lives in `data/`. Components render whatever is there.
 
-## License
+| File | Controls |
+|---|---|
+| `data/projects.ts` | **Projects.** Array order = display order. `featured: true` = big showcase card, `false` = compact "More on GitHub" row. Add/remove/reorder entries here only. |
+| `data/experience.ts` | Jobs (top = most recent) + leadership strip |
+| `data/skills.ts` | Skill groups + the marquee tool strip |
+| `data/credentials.ts` | Education, publication, certifications |
+| `data/site.ts` | Name, bio, roles, socials, email, hero status line, stats |
 
-This project is open source and available under the [MIT License](LICENSE).
+To add a project: copy an existing object in `data/projects.ts`, fill in the fields, drop a screenshot in `public/`, and set `image: "/your-file.png"`. Projects without an image automatically get generated neural-graph cover art. Push to `main` and Vercel redeploys.
 
-## Contact
+## Notes for working on this repo
 
-Muhammad Mustafa - muhammadmustafakhakwani@gmail.com
+- The repo lives on Google Drive. `.npmrc` uses `node-linker=hoisted` + `package-import-method=copy` because pnpm's default symlink/hardlink layout breaks on Drive's virtual filesystem. **Pause Drive sync during heavy dev/builds** to avoid file-lock flakiness; long-term, prefer a local clone with GitHub as the sync mechanism.
+- Theme: class-based dark mode with a pre-hydration script in `app/layout.tsx` (no flash of wrong theme). Tokens are OKLCH CSS variables in `app/globals.css`, mapped to Tailwind via `@theme inline`.
+- The WebGL hero (`components/three/`) falls back to a static SVG poster without WebGL, freezes under `prefers-reduced-motion`, drops particle count on mobile, and pauses off-screen.
