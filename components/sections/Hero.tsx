@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { AnimatePresence, motion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import { site } from "@/data/site";
 import { Magnetic } from "@/components/motion/Magnetic";
 
@@ -62,6 +68,12 @@ function RoleCycler({ roles }: { roles: string[] }) {
 
 export function Hero() {
   const [scrolledPast, setScrolledPast] = useState(false);
+  const reduced = useReducedMotion();
+  const { scrollY } = useScroll();
+  // depth on scroll-out: content drifts down and fades while the field stays
+  const contentY = useTransform(scrollY, [0, 700], [0, 130]);
+  const contentOpacity = useTransform(scrollY, [0, 550], [1, 0]);
+
   useEffect(() => {
     const onScroll = () => setScrolledPast(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -75,7 +87,10 @@ export function Hero() {
     >
       <HeroCanvas />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8">
+      <motion.div
+        style={reduced ? undefined : { y: contentY, opacity: contentOpacity }}
+        className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8"
+      >
         <p
           className="anim-fade-up mb-5 font-mono text-[0.8rem] text-muted"
           style={{ animationDelay: "0.1s" }}
@@ -144,7 +159,7 @@ export function Hero() {
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <motion.a
         href="#about"

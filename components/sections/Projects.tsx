@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { projects } from "@/data/projects";
@@ -10,8 +9,6 @@ import { SectionHeading } from "@/components/layout/SectionHeading";
 import { FadeUp } from "@/components/motion/FadeUp";
 import { Chip } from "@/components/ui/Chip";
 import { CoverArt } from "@/components/ui/CoverArt";
-
-const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const FILTERS: { key: ProjectCategory | "all"; label: string }[] = [
   { key: "all", label: "All" },
@@ -39,81 +36,108 @@ function ArrowIcon() {
   );
 }
 
-function ProjectCard({ project, wide }: { project: Project; wide: boolean }) {
+function ProjectRow({ project, index }: { project: Project; index: number }) {
+  const [open, setOpen] = useState(false);
+
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
-      className={`group relative overflow-hidden rounded-2xl border border-line bg-surface transition-[border-color,box-shadow] duration-300 hover:border-accent/50 hover:shadow-[0_8px_48px_var(--glow)] ${
-        wide ? "md:col-span-2" : ""
-      }`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      className="group relative overflow-hidden border-b border-line"
     >
-      <div className={`flex flex-col ${wide ? "md:flex-row" : ""}`}>
-        <div
-          className={`relative aspect-[8/5] overflow-hidden border-b border-line ${
-            wide ? "md:aspect-auto md:w-1/2 md:border-b-0 md:border-r" : ""
-          }`}
-        >
-          {project.image ? (
-            <Image
-              src={project.image}
-              alt={`${project.title} screenshot`}
-              fill
-              sizes={wide ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 50vw, 100vw"}
-              className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04]"
-              unoptimized={project.image.endsWith(".gif")}
-            />
-          ) : (
-            <div className="absolute inset-0 transition-transform duration-300 ease-out group-hover:scale-[1.04]">
-              <CoverArt slug={project.slug} title={project.title} />
-            </div>
-          )}
+      {/* neural cover art washes in from the right on hover */}
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-2/3 opacity-0 transition-opacity duration-300 group-hover:opacity-25 [mask-image:linear-gradient(to_left,black,transparent)]"
+        aria-hidden
+      >
+        <CoverArt slug={project.slug} title="" />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="relative grid w-full grid-cols-[2.5rem_1fr_1.5rem] items-baseline gap-x-4 py-7 text-left sm:gap-x-6 md:grid-cols-[3.5rem_1fr_15rem_1.5rem]"
+      >
+        <span className="font-mono text-sm text-accent" aria-hidden>
+          {String(index + 1).padStart(2, "0")}
+        </span>
+
+        <div>
+          <h3 className="font-display-sub text-[clamp(1.4rem,3.2vw,2.2rem)] transition-colors duration-200 group-hover:text-accent">
+            {project.title}
+          </h3>
+          <p className="mt-1.5 max-w-[58ch] text-[0.95rem] text-muted">
+            {project.summary}
+          </p>
         </div>
 
-        <div className={`flex flex-col p-6 sm:p-7 ${wide ? "md:w-1/2 md:justify-center" : ""}`}>
-          <h3 className="font-display-sub text-xl sm:text-2xl">{project.title}</h3>
-          <p className="mt-2 text-[0.95rem] text-muted">{project.summary}</p>
+        <span className="hidden self-center text-right font-mono text-[0.72rem] leading-relaxed text-muted md:block">
+          {project.tech.slice(0, 3).join(" · ")}
+        </span>
 
-          {project.bullets.length > 0 && (
-            <ul className="mt-4 space-y-1.5">
-              {project.bullets.map((b) => (
-                <li key={b} className="flex gap-2.5 text-[0.88rem] leading-relaxed text-muted">
-                  <span className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-accent-2" aria-hidden />
-                  {b}
-                </li>
-              ))}
-            </ul>
-          )}
+        <motion.span
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="justify-self-end self-center text-muted transition-colors duration-200 group-hover:text-accent"
+          aria-hidden
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </motion.span>
+      </button>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {project.tech.map((t) => (
-              <Chip key={t}>{t}</Chip>
-            ))}
-          </div>
-
-          <div className="mt-5 flex items-center gap-5">
-            {project.live && (
-              <a
-                href={project.live}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group/link inline-flex items-center gap-1.5 font-mono text-[0.8rem] text-accent transition-colors duration-200 hover:text-accent-2"
-              >
-                Live <ArrowIcon />
-              </a>
+      <div
+        className={`relative grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="pb-8 pl-14 pr-4 md:pl-20 md:pr-8">
+            {project.bullets.length > 0 && (
+              <ul className="max-w-[68ch] space-y-2">
+                {project.bullets.map((b) => (
+                  <li key={b} className="flex gap-2.5 text-[0.9rem] leading-relaxed text-muted">
+                    <span className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-accent-2" aria-hidden />
+                    {b}
+                  </li>
+                ))}
+              </ul>
             )}
-            {project.repo && (
-              <a
-                href={project.repo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group/link inline-flex items-center gap-1.5 font-mono text-[0.8rem] text-muted transition-colors duration-200 hover:text-accent"
-              >
-                Repo <ArrowIcon />
-              </a>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {project.tech.map((t) => (
+                <Chip key={t}>{t}</Chip>
+              ))}
+            </div>
+
+            {(project.live || project.repo) && (
+              <div className="mt-6 flex items-center gap-6">
+                {project.live && (
+                  <a
+                    href={project.live}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group/link inline-flex items-center gap-1.5 font-mono text-[0.8rem] text-accent transition-colors duration-200 hover:text-accent-2"
+                  >
+                    Live <ArrowIcon />
+                  </a>
+                )}
+                {project.repo && (
+                  <a
+                    href={project.repo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group/link inline-flex items-center gap-1.5 font-mono text-[0.8rem] text-muted transition-colors duration-200 hover:text-accent"
+                  >
+                    Repo <ArrowIcon />
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -139,7 +163,7 @@ export function Projects() {
     >
       <SectionHeading index="03" title="Projects" />
 
-      <FadeUp className="mb-10 flex flex-wrap gap-2">
+      <FadeUp className="mb-8 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -157,10 +181,10 @@ export function Projects() {
         ))}
       </FadeUp>
 
-      <motion.div layout className="grid gap-6 md:grid-cols-2">
+      <motion.div layout className="border-t border-line">
         <AnimatePresence mode="popLayout">
           {featured.map((project, i) => (
-            <ProjectCard key={project.slug} project={project} wide={i < 2} />
+            <ProjectRow key={project.slug} project={project} index={i} />
           ))}
         </AnimatePresence>
       </motion.div>

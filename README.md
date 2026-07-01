@@ -32,7 +32,7 @@ All site content lives in `data/`. Components render whatever is there.
 | `data/credentials.ts` | Education, publication, certifications |
 | `data/site.ts` | Name, bio, roles, socials, email, hero status line, stats |
 
-To add a project: copy an existing object in `data/projects.ts`, fill in the fields, drop a screenshot in `public/`, and set `image: "/your-file.png"`. Projects without an image automatically get generated neural-graph cover art. Push to `main` and Vercel redeploys.
+To add a project: copy an existing object in `data/projects.ts` and fill in the fields. No screenshot needed — every project gets deterministic generated neural-graph cover art (shown as a hover wash on featured rows). The `image` field is currently unused by the design but kept in the schema. Push to `main` and Vercel redeploys.
 
 ## Notes for working on this repo
 
