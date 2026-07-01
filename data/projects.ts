@@ -26,6 +26,24 @@ export const projects: Project[] = [
     live: "https://react-contract-chatbot.vercel.app/",
     repo: "https://github.com/LethalZoro/Contracts-summary-Flask",
     featured: true,
+    caseStudy: {
+      intro:
+        "Construction contracts are long, dense, and expensive to review. Contract Summary AI ingests a UK construction contract as a PDF and turns it into something a human can actually use: a structured summary, plus a chat assistant that answers questions grounded in the document itself.",
+      sections: [
+        {
+          heading: "The pipeline",
+          body: "The backend is a Flask REST API orchestrating LangChain. An uploaded PDF is parsed, chunked, and embedded into ChromaDB. When a user asks a question, the most relevant passages are retrieved and handed to OpenAI GPT-4o alongside the query, so every answer is grounded in the actual contract text rather than the model's imagination. The same retrieval machinery drives the structured summaries.",
+        },
+        {
+          heading: "The interface",
+          body: "A responsive React frontend handles the full workflow: upload a contract, read the generated summary, then drop into a chat with the assistant for anything the summary didn't cover. The frontend is deployed on Vercel and talks to the Flask API.",
+        },
+        {
+          heading: "What it demonstrates",
+          body: "End-to-end Retrieval-Augmented Generation shipped as a working product rather than a notebook demo: document processing, vector search, grounded generation, and a clean interface wrapped around all of it.",
+        },
+      ],
+    },
   },
   {
     slug: "langgraph-chatbot",
@@ -43,6 +61,24 @@ export const projects: Project[] = [
     live: "https://langgraph-chatbot-wtth.onrender.com/",
     repo: "https://github.com/LethalZoro/LangGraph-Chatbot",
     featured: true,
+    caseStudy: {
+      intro:
+        "Most chatbot demos are a single prompt in a loop. This one is a stateful conversation engine: LangGraph manages the dialogue as an explicit graph, and every state change streams to the browser in real time.",
+      sections: [
+        {
+          heading: "State as a graph",
+          body: "LangGraph models the conversation as nodes and transitions instead of one long prompt. User input is routed through the graph, and structured state updates at every step, which makes the flow debuggable and extensible in a way ad-hoc prompt chains are not.",
+        },
+        {
+          heading: "Real-time synchronization",
+          body: "Client and server stay in lockstep over WebSockets. As the graph advances, the frontend receives the updated state instantly and renders both the conversation history and the raw structured JSON state, so you can watch the machine think.",
+        },
+        {
+          heading: "Running it",
+          body: "The model layer is a local LLM rather than a hosted API, and the whole system is deployed on Render behind a lightweight HTML, CSS, and JavaScript frontend.",
+        },
+      ],
+    },
   },
   {
     slug: "trailmind",
@@ -58,6 +94,24 @@ export const projects: Project[] = [
     category: "ai",
     repo: "https://github.com/LethalZoro/TrailMind",
     featured: true,
+    caseStudy: {
+      intro:
+        "TrailMind is a voice and camera assistant that runs entirely offline on a Raspberry Pi 5. No cloud, no connectivity requirement: the models live on the device.",
+      sections: [
+        {
+          heading: "Why offline",
+          body: "Assistants stop working exactly where you might need them most: off-grid. TrailMind is built for that. Everything from speech to vision runs on-device, which also means nothing you say or show it ever leaves the hardware.",
+        },
+        {
+          heading: "The on-device stack",
+          body: "A Raspberry Pi 5 handles the full loop, listening and responding by voice and understanding what the camera sees, inside the compute and memory budget of a single-board computer.",
+        },
+        {
+          heading: "AI meets hardware",
+          body: "This is the intersection I care most about: taking models that normally assume a data center and making them work on constrained silicon. TrailMind applies the same instinct as my FPGA and embedded work to a self-contained product.",
+        },
+      ],
+    },
   },
   {
     slug: "interviewer-ai",

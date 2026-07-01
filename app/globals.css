@@ -97,6 +97,11 @@ section {
   scroll-margin-top: 4.5rem;
 }
 
+/* Decorative ghost numeral rendered via pseudo-element (no text node) */
+.ghost-numeral::before {
+  content: attr(data-index);
+}
+
 /* CSS-driven hero entrance: starts at first paint, no JS wait (LCP-safe) */
 @keyframes rise-in {
   from {

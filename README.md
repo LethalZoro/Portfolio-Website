@@ -34,6 +34,8 @@ All site content lives in `data/`. Components render whatever is there.
 
 To add a project: copy an existing object in `data/projects.ts` and fill in the fields. No screenshot needed — every project gets deterministic generated neural-graph cover art (shown as a hover wash on featured rows). The `image` field is currently unused by the design but kept in the schema. Push to `main` and Vercel redeploys.
 
+To give a project its own case-study page at `/projects/<slug>`, add a `caseStudy` block (an `intro` paragraph plus `sections` of `{ heading, body }`) to its entry — the page, the "Read the case study" button, and the sitemap entry all appear automatically.
+
 ## Notes for working on this repo
 
 - The repo lives on Google Drive. `.npmrc` uses `node-linker=hoisted` + `package-import-method=copy` because pnpm's default symlink/hardlink layout breaks on Drive's virtual filesystem. **Pause Drive sync during heavy dev/builds** to avoid file-lock flakiness; long-term, prefer a local clone with GitHub as the sync mechanism.

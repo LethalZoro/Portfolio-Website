@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
 import {
   AnimatePresence,
   motion,
@@ -11,11 +10,6 @@ import {
 } from "motion/react";
 import { site } from "@/data/site";
 import { Magnetic } from "@/components/motion/Magnetic";
-
-const HeroCanvas = dynamic(
-  () => import("@/components/three/HeroCanvas").then((m) => m.HeroCanvas),
-  { ssr: false }
-);
 
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
@@ -83,10 +77,8 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="cosmic-noise relative flex min-h-svh flex-col justify-center overflow-hidden"
+      className="cosmic-noise relative flex min-h-svh flex-col justify-center"
     >
-      <HeroCanvas />
-
       <motion.div
         style={reduced ? undefined : { y: contentY, opacity: contentOpacity }}
         className="relative z-10 mx-auto w-full max-w-6xl px-5 sm:px-8"

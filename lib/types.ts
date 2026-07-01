@@ -46,6 +46,12 @@ export interface LeadershipRole {
 
 export type ProjectCategory = "ai" | "web" | "hardware";
 
+export interface CaseStudy {
+  /** One-paragraph framing shown under the title. */
+  intro: string;
+  sections: { heading: string; body: string }[];
+}
+
 export interface Project {
   slug: string;
   title: string;
@@ -59,6 +65,8 @@ export interface Project {
   repo?: string;
   /** true = big showcase card; false = compact "More on GitHub" row. */
   featured: boolean;
+  /** Present = the project gets a /projects/[slug] case-study page. */
+  caseStudy?: CaseStudy;
 }
 
 export interface SkillGroup {

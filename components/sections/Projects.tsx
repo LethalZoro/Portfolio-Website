@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { projects } from "@/data/projects";
 import { site } from "@/data/site";
@@ -115,8 +116,16 @@ function ProjectRow({ project, index }: { project: Project; index: number }) {
               ))}
             </div>
 
-            {(project.live || project.repo) && (
-              <div className="mt-6 flex items-center gap-6">
+            {(project.live || project.repo || project.caseStudy) && (
+              <div className="mt-6 flex flex-wrap items-center gap-6">
+                {project.caseStudy && (
+                  <Link
+                    href={`/projects/${project.slug}`}
+                    className="group/link inline-flex items-center gap-1.5 rounded-full border border-accent/50 px-4 py-1.5 font-mono text-[0.8rem] text-accent transition-colors duration-200 hover:bg-accent hover:text-bg"
+                  >
+                    Read the case study <ArrowIcon />
+                  </Link>
+                )}
                 {project.live && (
                   <a
                     href={project.live}

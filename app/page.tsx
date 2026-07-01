@@ -1,6 +1,7 @@
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { Cursor } from "@/components/ui/Cursor";
+import { FieldBackground } from "@/components/three/FieldBackground";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { Marquee } from "@/components/motion/Marquee";
 import { Hero } from "@/components/sections/Hero";
@@ -22,18 +23,21 @@ export default function Home() {
         Skip to content
       </a>
       <Cursor />
+      <FieldBackground />
       <Nav />
-      <main>
-        <Hero />
-        <About />
-        <Experience />
-        <Projects />
-        <Marquee items={marqueeTools} />
-        <Skills />
-        <Credentials />
-        <Contact />
-      </main>
-      <Footer />
+      <div className="relative z-10">
+        <main>
+          <Hero />
+          <About />
+          <Experience />
+          <Projects />
+          <Marquee items={marqueeTools} />
+          <Skills />
+          <Credentials />
+          <Contact />
+        </main>
+        <Footer />
+      </div>
     </MotionProvider>
   );
 }
