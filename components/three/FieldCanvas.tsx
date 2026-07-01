@@ -28,6 +28,7 @@ export function FieldCanvas({
         isDark={isDark}
         interactive={!isMobile && !reduced}
         count={count}
+        boot={!reduced}
       />
     </Canvas>
   );

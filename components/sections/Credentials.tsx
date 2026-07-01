@@ -1,6 +1,7 @@
 import { certifications, education, publication } from "@/data/credentials";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { FadeUp } from "@/components/motion/FadeUp";
+import { ChipModel } from "@/components/three/ChipModel";
 
 export function Credentials() {
   return (
@@ -46,6 +47,7 @@ export function Credentials() {
 
         <FadeUp delay={0.1}>
           <div>
+            <ChipModel />
             <h3 className="font-display-sub mb-5 text-lg">Certifications</h3>
             <ul className="space-y-3">
               {certifications.map((cert) => (

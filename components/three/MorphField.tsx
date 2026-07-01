@@ -26,6 +26,19 @@ const SIM_GLSL = /* glsl */ `
   uniform vec4 uTrail[${TRAIL_LEN}];
   uniform vec4 uWave;
   uniform float uScrollVel;
+  uniform float uIntro;
+
+  // boot sequence: every particle starts flung into deep space (position
+  // derived from its seed) and flies home with per-particle stagger
+  vec3 bootIn(vec3 target, float seed) {
+    vec3 scatter = vec3(
+      sin(seed * 91.17) * 14.0,
+      cos(seed * 57.33) * 9.0,
+      sin(seed * 23.7) * 12.0 - 4.0
+    );
+    float m = smoothstep(seed * 0.4, 1.0, uIntro);
+    return mix(scatter, target, m);
+  }
 
   vec3 drift(vec3 p, float seed, float time, float amp) {
     p.x += sin(time * 0.25 + seed * 6.2831) * 0.20 * amp;
@@ -78,6 +91,7 @@ const POINTS_VERT = /* glsl */ `
   ${SIM_GLSL}
   void main() {
     vec3 target = morphed(position, aPosBrain, aPosChip, uMorph, aSeed);
+    target = bootIn(target, aSeed);
     float amp = mix(1.0, 0.4, clamp(uMorph - 1.0, 0.0, 1.0));
     vec3 p = drift(target, aSeed, uTime, amp);
     float glow;
@@ -117,6 +131,7 @@ const LINES_VERT = /* glsl */ `
   ${SIM_GLSL}
   void main() {
     vec3 target = morphed(position, aPosBrain, aPosChip, uMorph, aSeed);
+    target = bootIn(target, aSeed);
     float amp = mix(1.0, 0.4, clamp(uMorph - 1.0, 0.0, 1.0));
     vec3 p = drift(target, aSeed, uTime, amp);
     float glow;
@@ -131,11 +146,13 @@ const LINES_FRAG = /* glsl */ `
   uniform vec3 uColorA;
   uniform vec3 uColorB;
   uniform float uLineOpacity;
+  uniform float uIntro;
   varying float vPulse;
   void main() {
     vec3 color = mix(uColorA, uColorB, vPulse);
     float alpha = uLineOpacity + vPulse * uLineOpacity * 3.5;
-    gl_FragColor = vec4(color, alpha);
+    // connections only light up once the nodes have landed
+    gl_FragColor = vec4(color, alpha * pow(uIntro, 3.0));
   }
 `;
 
@@ -359,14 +376,21 @@ function fadeTarget(p: number): number {
   return 0.22;
 }
 
+function easeOutCubic(x: number): number {
+  return 1 - Math.pow(1 - x, 3);
+}
+
 export function MorphField({
   isDark,
   interactive,
   count,
+  boot,
 }: {
   isDark: boolean;
   interactive: boolean;
   count: number;
+  /** false = skip the fly-in assembly (reduced motion) */
+  boot: boolean;
 }) {
   const { viewport, gl } = useThree();
   const field = useMemo(() => buildField(count), [count]);
@@ -384,6 +408,7 @@ export function MorphField({
     () => ({
       uTime: { value: 0 },
       uMorph: { value: 0 },
+      uIntro: { value: 0 },
       uScrollVel: { value: 0 },
       uPixelRatio: { value: gl.getPixelRatio() },
       uTrail: {
@@ -417,6 +442,11 @@ export function MorphField({
     const k = Math.min(delta * 3, 1);
     const k6 = Math.min(delta * 6, 1);
     uniforms.uTime.value += delta;
+
+    // boot assembly: ~2s fly-in after mount (instant under reduced motion)
+    uniforms.uIntro.value = boot
+      ? easeOutCubic(Math.min(1, Math.max(0, (uniforms.uTime.value - 0.15) / 2.0)))
+      : 1;
 
     const p = scrollFraction();
 
