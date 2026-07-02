@@ -104,7 +104,9 @@ export function Contact() {
                   {copied ? "copied ✓" : "click to copy"}
                 </span>
               </button>
-              <p className="font-mono text-[0.9rem] text-muted">{site.phone}</p>
+              {site.phone && (
+                <p className="font-mono text-[0.9rem] text-muted">{site.phone}</p>
+              )}
               <div className="flex gap-5 pt-2">
                 {site.socials.map((s) => (
                   <a

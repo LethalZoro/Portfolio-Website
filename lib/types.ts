@@ -11,7 +11,8 @@ export interface SiteInfo {
   bio: string;
   personalityLine: string;
   email: string;
-  phone: string;
+  /** Omit to hide the phone number from the site. */
+  phone?: string;
   /** From-address for contact-form emails; its domain must be verified in Resend. */
   contactFrom: string;
   location: string;

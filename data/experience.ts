@@ -12,7 +12,7 @@ export const experiences: Experience[] = [
     ],
     period: "Aug 2025 – Present",
     location: "Sydney, NSW",
-    mode: "Remote",
+    mode: "Hybrid",
     bullets: [
       "Guiding and implementing AI solutions across business processes to improve efficiency, accuracy, and client experience.",
       "Collaborating with management to identify where AI can deliver measurable value and streamline workflows.",

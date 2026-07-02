@@ -15,7 +15,7 @@ export const site: SiteInfo = {
   personalityLine:
     "When I'm not shipping AI systems, you'll find me deep in One Piece lore or dodging bosses in Elden Ring.",
   email: "muhammadmustafakhakwani@gmail.com",
-  phone: "+92 309 3243363",
+  // phone: "+92 309 3243363",
   contactFrom: "Portfolio Contact <onboarding@mustafa.software>",
   location: "Islamabad, Pakistan",
   statusLine: "based in Islamabad · working with Sydney · open to interesting problems",
