@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactSchema } from "@/lib/contact-schema";
+import { site } from "@/data/site";
 
 export const runtime = "nodejs";
 
-const TO_EMAIL = "muhammadmustafakhakwani@gmail.com";
-const FROM_EMAIL = "Portfolio Contact <onboarding@mustafa.software>";
+const TO_EMAIL = site.email;
+const FROM_EMAIL = site.contactFrom;
 
 function escapeHtml(value: string): string {
   return value

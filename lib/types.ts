@@ -12,6 +12,8 @@ export interface SiteInfo {
   personalityLine: string;
   email: string;
   phone: string;
+  /** From-address for contact-form emails; its domain must be verified in Resend. */
+  contactFrom: string;
   location: string;
   statusLine: string;
   socials: Social[];
